@@ -1,4 +1,4 @@
-module gotest
+module github.com/siddhesh-tamhanekar/gotest
 
 go 1.23.0
 
