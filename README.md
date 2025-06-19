@@ -30,6 +30,14 @@ cd gotest
 go build -o gotest
 ```
 
+# 🚩 CLI Flags for Output Customization:
+
+|Flag   | Description  |
+|--|--|
+| `--no-color` | Disables colored output (ideal for raw logs or CI environments) |
+| `--fail-only` | Suppresses successful test output; shows only failed test cases |
+| `--no-color` | Hides individual test case output; shows only package + total summary |
+
 # 🚀 Usage
 Use gotest just like you would use go test:
 
