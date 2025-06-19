@@ -12,9 +12,14 @@ A drop-in replacement for `go test -json` that shows test results beautifully wi
 - 📄 **Clean formatting** of logs and errors
 - 📊 **Summary view** at the end of test run
 - 🔧 Accepts all `go test` flags (just like the original!)
-- 🔜 **Upcoming flags**: `--fail-only`, `--no-color`, `--collapse`, `--watch`
 
 ---
+## 🛠 Upcoming Features
+
+- `--watch`  
+  Automatically re-run tests when Go files change.  
+  Useful for TDD and live feedback loops during development.  
+  _Coming soon!_
 
 ## 📦 Installation
 
