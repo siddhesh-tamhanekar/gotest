@@ -14,6 +14,15 @@ import (
 )
 
 var width = 80
+var flag uint8
+var packageCount, all, failed int
+var dur float64
+
+const (
+	FAIL_ONLY = 1 << iota
+	COLLAPSE
+	NO_COLOR
+)
 
 // pkgInfo holds info for a package test run
 type pkgInfo struct {
@@ -49,6 +58,9 @@ func stripANSI(str string) string {
 	return re.ReplaceAllString(str, "")
 }
 func colorizeDuration(d float64) string {
+	if hasFlag(NO_COLOR) {
+		return fmt.Sprintf("%.2fs\x1b[0m", d)
+	}
 	switch {
 	case d < 0.5:
 		return fmt.Sprintf("\x1b[32m%.2fs\x1b[0m", d)
@@ -62,6 +74,9 @@ func colorizeDuration(d float64) string {
 // Print recursively prints test and subtests with indent and color
 func (t *TestNode) Print(indent int) {
 	var status string
+	if hasFlag(FAIL_ONLY) && t.passed {
+		return
+	}
 	if t.passed {
 		status = tick()
 	} else {
@@ -88,10 +103,8 @@ func (t *TestNode) Print(indent int) {
 
 func main() {
 	// Prepare command: go test -json + user args
-	args := []string{"test", "-json"}
-	inputArgs := os.Args[1:]
-
-	args = append(args, inputArgs...)
+	forwardedArgs := parseFlags()
+	args := append([]string{"test", "-json"}, forwardedArgs...)
 	cmd := exec.Command("go", args...)
 
 	stdout, err := cmd.StdoutPipe()
@@ -174,18 +187,32 @@ func main() {
 				// When package completes, print all tests
 				var status string
 				if action == "pass" {
-					status = "\x1b[32m✔\x1b[0m"
+					status = tick()
 				} else {
-					status = "\x1b[31m✘\x1b[0m"
+					status = cross()
 				}
 				fmt.Printf("%s Package: %s   "+tick()+" Passed:%d   "+cross()+" Failed: %d   "+duration()+"  Duration: %.2fs\n", status, pkgName, pkg.count-pkg.failed, pkg.failed, pkg.elapsed)
-				pkg.tree.Print(1)
-				fmt.Println()
+				all += pkg.count
+				failed += pkg.failed
+				dur += pkg.elapsed
+				packageCount++
+				if !hasFlag(COLLAPSE) {
+					pkg.tree.Print(1)
+					fmt.Println()
+				}
+
 				// Delete package info to free memory and avoid reprinting
 				delete(pkgs, pkgName)
 			}
 		}
 	}
+	status := tick()
+	if failed > 0 {
+		status = cross()
+	}
+	fmt.Println(strings.Repeat("=", width))
+	fmt.Printf("%s  Total Packages: %d   "+tick()+" Passed:%d   "+cross()+" Failed: %d   "+duration()+"  Duration: %.2fs\n", status, packageCount, all-failed, failed, dur)
+	fmt.Println(strings.Repeat("=", width))
 
 	if err := scanner.Err(); err != nil {
 		log.Fatal(err)
@@ -196,22 +223,53 @@ func main() {
 	}
 }
 
+func parseFlags() []string {
+	forwardedArgs := []string{}
+	for _, arg := range os.Args[1:] {
+		switch arg {
+		case "--fail-only":
+			flag = flag | FAIL_ONLY
+		case "--collapse":
+			flag = flag | COLLAPSE
+		case "--no-color":
+			flag = flag | NO_COLOR
+
+		default:
+			forwardedArgs = append(forwardedArgs, arg)
+		}
+	}
+	if hasFlag(FAIL_ONLY) && hasFlag(COLLAPSE) {
+		fmt.Println("NOTE: fail-only flag has no use when passed with collapsed")
+	}
+	return forwardedArgs
+}
+
 // camelCaseToSpace inserts spaces before uppercase letters, trims "Test " prefix
 func camelCaseToSpace(s string) string {
-	re := regexp.MustCompile(`([a-z])([A-Z])(\_)`)
+	re := regexp.MustCompile(`([a-z])([A-Z])`)
 	s1 := re.ReplaceAllString(s, `$1 $2`)
 	s1 = strings.ReplaceAll(s1, "_", " ")
 	s1 = strings.ReplaceAll(s1, "-", " ")
 
-	return strings.TrimPrefix(s1, "Test ")
+	return strings.TrimPrefix(s1, "Test")
 }
 
 func tick() string {
+	if hasFlag(NO_COLOR) {
+		return "✓"
+	}
 	return "\x1b[32m✓\x1b[0m"
 }
 func cross() string {
+	if hasFlag(NO_COLOR) {
+		return "✘"
+	}
 	return "\x1b[31m✘\x1b[0m"
 }
 func duration() string {
 	return "⏱"
+}
+
+func hasFlag(f byte) bool {
+	return flag&f != 0
 }

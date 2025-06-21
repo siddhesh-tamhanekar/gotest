@@ -12,9 +12,14 @@ A drop-in replacement for `go test -json` that shows test results beautifully wi
 - 📄 **Clean formatting** of logs and errors
 - 📊 **Summary view** at the end of test run
 - 🔧 Accepts all `go test` flags (just like the original!)
-- 🔜 **Upcoming flags**: `--fail-only`, `--no-color`, `--collapse`, `--watch`
 
 ---
+## 🛠 Upcoming Features
+
+- `--watch`  
+  Automatically re-run tests when Go files change.  
+  Useful for TDD and live feedback loops during development.  
+  _Coming soon!_
 
 ## 📦 Installation
 
@@ -29,6 +34,14 @@ git clone https://github.com/siddhesh-tamhanekar/gotest.git
 cd gotest
 go build -o gotest
 ```
+
+# 🚩 CLI Flags for Output Customization:
+
+|Flag   | Description  |
+|--|--|
+| `--no-color` | Disables colored output (ideal for raw logs or CI environments) |
+| `--fail-only` | Suppresses successful test output; shows only failed test cases |
+| `--no-color` | Hides individual test case output; shows only package + total summary |
 
 # 🚀 Usage
 Use gotest just like you would use go test:
