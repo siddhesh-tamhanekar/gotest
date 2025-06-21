@@ -246,12 +246,12 @@ func parseFlags() []string {
 
 // camelCaseToSpace inserts spaces before uppercase letters, trims "Test " prefix
 func camelCaseToSpace(s string) string {
-	re := regexp.MustCompile(`([a-z])([A-Z])(\_)`)
+	re := regexp.MustCompile(`([a-z])([A-Z])`)
 	s1 := re.ReplaceAllString(s, `$1 $2`)
 	s1 = strings.ReplaceAll(s1, "_", " ")
 	s1 = strings.ReplaceAll(s1, "-", " ")
 
-	return strings.TrimPrefix(s1, "Test ")
+	return strings.TrimPrefix(s1, "Test")
 }
 
 func tick() string {
